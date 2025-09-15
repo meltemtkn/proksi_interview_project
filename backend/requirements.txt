@@ -8,3 +8,7 @@ passlib==1.7.4
 bcrypt==4.2.1
 python-jose==3.3.0
 alembic==1.13.2
+email-validator==2.3.0
+celery==5.3.4
+redis==5.0.1
+python-multipart==0.0.6

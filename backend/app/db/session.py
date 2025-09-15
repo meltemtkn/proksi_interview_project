@@ -5,9 +5,8 @@ from app.core.settings import settings
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URI)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-
+# database'e bağlanmak için kullanılır
 def get_db():
-    """Dependency to get DB session"""
     db = SessionLocal()
     try:
         yield db

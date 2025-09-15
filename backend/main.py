@@ -10,9 +10,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.api import router
 from app.core.settings import settings
-from app.db.init_db import init_db
-from app.db.session import get_db
-
 
 def create_app() -> FastAPI:
     # app and router creation
@@ -48,14 +45,18 @@ def create_app() -> FastAPI:
     
     app.include_router(router)
     
-    # Initialize database
+    # Initialize database - make it optional
     try:
+        from app.db.session import get_db
+        from app.db.init_db import init_db
+        
         db = next(get_db())
         init_db(db)
         print("Database initialized successfully")
     except Exception as e:
-        print(f"Failed to initialize database: {e}")
-        raise
+        print(f"Warning: Could not initialize database: {e}")
+        print("Application will start without database initialization")
+        print("Make sure PostgreSQL is running and accessible")
 
     return app
 
@@ -64,4 +65,4 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    uvicorn.run(app="main:app", host="0.0.0.0", port=8000, reload=True, workers=settings.WORKERS)
+    uvicorn.run(app="main:app", host="0.0.0.0", port=8000, reload=True, workers=1)

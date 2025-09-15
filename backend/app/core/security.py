@@ -3,16 +3,21 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Any, Union, Optional
 
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db
+from app.schemas.users import Role
 
 # Security Configuration
 ALGORITHM: str = os.getenv('ALGORITHM', 'HS256')
 SECRET_KEY: str = os.getenv('SECRET_KEY', secrets.token_urlsafe(32))
 ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES', '60'))
 
-# Password Context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# JWT Bearer Token
+security = HTTPBearer()
 
 
 def create_access_token(subject: str | Any, expires_delta: Optional[timedelta] = None) -> str:
@@ -39,17 +44,50 @@ def verify_token(token: str) -> Optional[str]:
         return None
 
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against a hashed password"""
-    return pwd_context.verify(plain_password, hashed_password)
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    """Get current authenticated user from JWT token"""
+    # Import here to avoid circular import
+    from app.crud.users_crud import get_user_by_email
+    
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    user = get_user_by_email(db, email=email)
+    if user is None:
+        raise credentials_exception
+    
+    return user
 
 
-def get_password_hash(password: str) -> str:
-    """Hash a password"""
-    return pwd_context.hash(password)
+def get_current_admin_user(current_user = Depends(get_current_user)):
+    """Require admin role"""
+    if current_user.role != Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    return current_user
 
 
-def generate_password_reset_token(email: str) -> str:
-    """Generate a password reset token"""
-    delta = timedelta(hours=24)  # Reset token expires in 24 hours
-    return create_access_token(subject=email, expires_delta=delta)
+def get_current_agent_or_admin_user(current_user = Depends(get_current_user)):
+    """Require agent or admin role"""
+    if current_user.role not in [Role.AGENT, Role.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions"
+        )
+    return current_user
