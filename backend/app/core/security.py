@@ -9,7 +9,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.schemas.users import Role
+from app.schemas.users import Role, User
 
 # Security Configuration
 ALGORITHM: str = os.getenv('ALGORITHM', 'HS256')
@@ -21,7 +21,6 @@ security = HTTPBearer()
 
 
 def create_access_token(subject: str | Any, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a JWT access token"""
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -32,8 +31,7 @@ def create_access_token(subject: str | Any, expires_delta: Optional[timedelta] =
     return encoded_jwt
 
 
-def verify_token(token: str) -> Optional[str]:
-    """Verify JWT token and return subject"""
+def verify_token(token: str) -> Optional[str]: # token'ın doğruluğunu kontrol et
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         subject: str = payload.get("sub")
@@ -48,8 +46,7 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
 ):
-    """Get current authenticated user from JWT token"""
-    # Import here to avoid circular import
+    # get_user_by_email'i burada import etmek için gerekli
     from app.crud.users_crud import get_user_by_email
     
     credentials_exception = HTTPException(
@@ -73,8 +70,8 @@ def get_current_user(
     return user
 
 
-def get_current_admin_user(current_user = Depends(get_current_user)):
-    """Require admin role"""
+def get_current_admin_user(current_user:User = Depends(get_current_user)):
+    # admin rolü gerektirir
     if current_user.role != Role.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -83,8 +80,8 @@ def get_current_admin_user(current_user = Depends(get_current_user)):
     return current_user
 
 
-def get_current_agent_or_admin_user(current_user = Depends(get_current_user)):
-    """Require agent or admin role"""
+def get_current_agent_or_admin_user(current_user:User = Depends(get_current_user)):
+    # agent veya admin rolü gerektirir
     if current_user.role not in [Role.AGENT, Role.ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

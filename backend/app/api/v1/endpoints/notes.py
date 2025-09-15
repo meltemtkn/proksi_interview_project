@@ -6,7 +6,7 @@ from app.db.session import get_db
 from app.models.notes import Note, Status
 from app.schemas.notes import NoteCreate, NoteResponse
 from app.core.security import get_current_user, get_current_admin_user
-from app.schemas.users import Role
+from app.schemas.users import Role, User
 from app.core.celery_app import celery_app
 
 router = APIRouter()
@@ -16,7 +16,7 @@ router = APIRouter()
 async def create_note(
     note_in: NoteCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user:User = Depends(get_current_user)
 ):
     # Create note with QUEUED status
     db_note = Note(
@@ -46,7 +46,7 @@ async def create_note(
 @router.get("/", response_model=List[NoteResponse])
 async def get_notes(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user:User = Depends(get_current_user)
 ):
     if current_user.role == Role.ADMIN:
         # Admins can see all notes
@@ -62,7 +62,7 @@ async def get_notes(
 async def get_note(
     note_id: str,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user:User = Depends(get_current_user)
 ):
     note = db.query(Note).filter(Note.id == note_id).first()
     
@@ -86,7 +86,7 @@ async def get_note(
 async def delete_note(
     note_id: str,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user:User = Depends(get_current_user)
 ):
     note = db.query(Note).filter(Note.id == note_id).first()
     

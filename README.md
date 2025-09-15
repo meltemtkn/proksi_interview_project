@@ -104,16 +104,10 @@ A FastAPI-based REST API with JWT authentication, role-based access control, and
      -H "Authorization: Bearer YOUR_TOKEN"
    ```
 
-4. **Health Check**:
-   ```bash
-   curl -X GET "http://localhost:8000/health"
-   ```
-
 ## Role-based Access
 
 - **ADMIN**: Can see all notes from all users
 - **AGENT**: Can only see their own notes
-- **Tenancy**: Automatically enforced - agents cannot access other users' data
 
 ## Background AI Summarization
 

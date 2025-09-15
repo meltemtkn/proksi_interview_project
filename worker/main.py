@@ -4,11 +4,11 @@ import logging
 import time
 from typing import Optional
 
-# backend'in bulunduğu dizinin adresi alınır
+# Add the backend directory to Python path
 backend_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../backend')
 sys.path.insert(0, backend_path)
 
-# Backend imports
+# Backend imports (backend. prefix olmadan)
 from app.core.celery_app import celery_app
 from app.db.session import get_db
 from app.models.notes import Note, Status
