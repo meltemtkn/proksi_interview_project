@@ -21,17 +21,17 @@ async def signup(user_in: UserCreate, db: Session = Depends(get_db)):
         )
     
     # Create new user
-    user = create_user(db, user_in=user_in)
+    user = create_user(db, user_in=user_in) 
     return user
 
 @router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(),
                 db: Session = Depends(get_db)):
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_user(db, form_data.username, form_data.password) # kullanıcının email ve şifresi doğru mu kontrol ediliyor
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password"
         )
-    access_token = create_access_token(subject=user.email)
+    access_token = create_access_token(subject=user.email) # kullanıcının email'i token'a eklendi
     return {"access_token": access_token, "token_type": "bearer"}

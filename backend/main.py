@@ -27,22 +27,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
-    # Add root endpoint
-    @app.get("/")
-    async def root():
-        """Welcome endpoint with API information"""
-        return {
-            "message": "Welcome to Proksi Interview Project API",
-            "version": "1.0.0",
-            "docs": "/docs",
-            "redoc": "/redoc",
-            "endpoints": {
-                "auth": "/api/auth",
-                "notes": "/api/notes"
-            }
-        }
-    
     app.include_router(router)
     
     # Initialize database - make it optional

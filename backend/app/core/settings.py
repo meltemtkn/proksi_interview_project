@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
-    def SQLALCHEMY_DATABASE_URI(self) -> str:
+    def SQLALCHEMY_DATABASE_URI(self) -> str: # database'in adresi
         return str(MultiHostUrl.build(
             scheme="postgresql+psycopg",
             username=self.POSTGRES_USER,
